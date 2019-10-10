@@ -8,11 +8,6 @@ from .base import BaseDetector
 
 @DETECTORS.register_module
 class SingleStageDetector(BaseDetector):
-    """Base class for single-stage detectors.
-
-    Single-stage detectors directly and densely predict bounding boxes on the
-    output features of the backbone+neck.
-    """
 
     def __init__(self,
                  backbone,
@@ -42,22 +37,17 @@ class SingleStageDetector(BaseDetector):
         self.bbox_head.init_weights()
 
     def extract_feat(self, img):
-        """Directly extract features from the backbone+neck
-        """
         x = self.backbone(img)
         if self.with_neck:
             x = self.neck(x)
         return x
 
     def forward_dummy(self, img):
-        """Used for computing network flops.
-
-        See `mmedetection/tools/get_flops.py`
-        """
         x = self.extract_feat(img)
         outs = self.bbox_head(x)
         return outs
 
+    # 输出为训练时的损失losses
     def forward_train(self,
                       img,
                       img_metas,
@@ -71,6 +61,7 @@ class SingleStageDetector(BaseDetector):
             *loss_inputs, gt_bboxes_ignore=gt_bboxes_ignore)
         return losses
 
+    # 定义模型的测试评价所需要执行的内容，输出为模型预测的边界框结果bbox_results
     def simple_test(self, img, img_meta, rescale=False):
         x = self.extract_feat(img)
         outs = self.bbox_head(x)
